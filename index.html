@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#FFD6E0">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>CallWA</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #fdf6f8;
+      margin: 0;
+      padding: 0;
+    }
+    .status {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: red;
+    }
+    .painel {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      background: #fff;
+    }
+    input, button, select {
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    .botoes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .cor-preview {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 10px auto;
+      border: 1px solid #333;
+    }
+    .esp-status {
+      margin-top: 10px;
+    }
+    .esp-led {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 8px;
+      background: #ccc;
+    }
+    @media (max-width: 500px) {
+      .painel {
+        width: 95%;
+        padding: 15px;
+      }
+      input, button, select {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="painel">
+    <h2>❤️ CallWa ❤️</h2>
+
+    <label>Estado de Conexão: <span class="status" id="status"></span> <span id="ping">0</span> ms</label>
+
+    <div style="margin-top: 10px">
+      <label>Enviar para:</label>
+      <select id="destino">
+        <option value="waleria">Waléria</option>
+        <option value="callebe">Callebe</option>
+        <option value="ambos">Ambos</option>
+      </select>
+    </div>
+
+    <div class="botoes-grid">
+      <button onclick="enviarComando('saudades')">Te amo ❤️</button>
+      <button onclick="enviarComando('pensando')">Tô pensando em você</button>
+      <button onclick="enviarComando('desculpas')">Me desculpa</button>
+      <button onclick="enviarComando('to_aqui')">Tô aquiii</button>
+      <button onclick="enviarComando('surpresinha')">👀</button>
+      <button onclick="enviarAspectro()">Aspectro</button>
+    </div>
+
+    <label>Velocidade:</label>
+    <input id="velocidade" type="range" min="0" max="100" value="50" oninput="document.getElementById('velLabel').innerText = this.value + '%'">
+    <span id="velLabel">50%</span>
+
+    <label style="font-weight: bold">Aspectro de Cor:</label>
+    <div id="color-picker" style="margin-bottom: 10px;"></div>
+    <div class="cor-preview" id="corPreview"></div>
+
+    <div class="esp-status">
+      <p>ESP32 Callebe: <span class="esp-led" id="statusCallebe"></span> | ESP32 Waléria: <span class="esp-led" id="statusWaleria"></span></p>
+    </div>
+  </div>
+
+  <script>
+    // (código JavaScript continua aqui, inalterado)
+  </script>
+</body>
+</html>
