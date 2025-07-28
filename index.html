@@ -82,7 +82,7 @@
   <div class="painel">
     <h2>❤️ CallWa ❤️</h2>
 
-    <label>Estado de Conexão: <span class="status" id="status"></span> <span id="ping">0</span> ms</label>
+    <label>Estado de Conexão: <span class="status" id="status"></span> <span id="ping">0</span>ms</label>
 
     <div style="margin-top: 10px">
       <label>Enviar para:</label>
@@ -99,7 +99,7 @@
       <button onclick="enviarComando('desculpas')">Me desculpa</button>
       <button onclick="enviarComando('to_aqui')">Tô aquiii</button>
       <button onclick="enviarComando('surpresinha')">👀</button>
-      <button onclick="enviarAspectro()">Aspectro</button>
+      <button onclick="enviarComando('aspectro')">Aspectro</button>
     </div>
 
     <label>Velocidade:</label>
@@ -116,7 +116,117 @@
   </div>
 
   <script>
-    // (código JavaScript continua aqui, inalterado)
+    const statusCircle = document.getElementById('status');
+    const pingText = document.getElementById('ping');
+    const ledCallebe = document.getElementById('statusCallebe');
+    const ledWaleria = document.getElementById('statusWaleria');
+
+    let client;
+    let corAtual = '#FFD6E0';
+    let lastPing = Date.now();
+    let lastSeen = { ESP_CALL: 0, ESP_WAL: 0 };
+
+    function conectarMQTT() {
+      const options = {
+        username: 'WEB_CALLWA',
+        password: 'Serzinhos2025',
+        clientId: 'CallWeb'
+      };
+
+      client = mqtt.connect('wss://70d4da565d9c476782999dc9303945b0.s1.eu.hivemq.cloud:8884/mqtt', options);
+
+      client.on('connect', () => {
+        statusCircle.style.background = 'green';
+        lastPing = Date.now();
+        client.subscribe('luminaria/ping');
+      });
+
+      client.on('message', (topic, message) => {
+        if (topic === 'luminaria/ping') {
+          try {
+            const payload = JSON.parse(message.toString());
+            if (payload.id && payload.status === 'ok' && payload.id !== 'CallWeb') {
+              const pingValue = Date.now() - lastPing;
+              pingText.textContent = `${pingValue}`;
+              lastPing = Date.now();
+              if (payload.id === 'ESP_CALL') lastSeen.ESP_CALL = Date.now();
+              else if (payload.id === 'ESP_WAL') lastSeen.ESP_WAL = Date.now();
+            }
+          } catch (e) {
+            console.warn('Erro ao interpretar mensagem:', e);
+          }
+        }
+      });
+
+      client.on('error', () => statusCircle.style.background = 'red');
+      client.on('close', () => statusCircle.style.background = 'red');
+
+      setInterval(() => {
+        if (client && client.connected) {
+          client.publish('luminaria/ping', JSON.stringify({ id: 'CallWeb', from: 'web', status: 'ok', timestamp: Date.now() }));
+        }
+        const now = Date.now();
+        ledCallebe.style.background = now - lastSeen.ESP_CALL < 3000 ? 'lime' : '#ccc';
+        ledWaleria.style.background = now - lastSeen.ESP_WAL < 3000 ? 'lime' : '#ccc';
+      }, 1000);
+    }
+
+    function enviarComando(efeito) {
+      if (!client || !client.connected) return;
+      const destino = document.getElementById('destino').value;
+      const velocidade = document.getElementById('velocidade').value;
+
+      let destinoFormatado;
+      if (destino === 'waleria') destinoFormatado = 'ESP_WAL';
+      else if (destino === 'callebe') destinoFormatado = 'ESP_CALL';
+      else destinoFormatado = 'ALL';
+
+      const payload = {
+        from: "web",
+        to: destinoFormatado,
+        efeito: efeito,
+        cor: corAtual,
+        velocidade: velocidade
+      };
+
+      if (destinoFormatado === 'ALL') {
+        client.publish('luminaria/para_voce', JSON.stringify(payload));
+        client.publish('luminaria/para_waleria', JSON.stringify(payload));
+      } else if (destinoFormatado === 'ESP_CALL') {
+        client.publish('luminaria/para_voce', JSON.stringify(payload));
+      } else if (destinoFormatado === 'ESP_WAL') {
+        client.publish('luminaria/para_waleria', JSON.stringify(payload));
+      }
+    }
+
+    window.onload = conectarMQTT;
+
+    const pickr = Pickr.create({
+      el: '#color-picker',
+      theme: 'classic',
+      default: '#FFD6E0',
+      swatches: [
+        '#F44336', '#E91E63', '#9C27B0', '#3F51B5',
+        '#2196F3', '#03A9F4', '#00BCD4', '#009688',
+        '#4CAF50', '#8BC34A', '#FFEB3B', '#FFC107',
+        '#FF9800', '#FF5722', '#795548', '#607D8B'
+      ],
+      components: {
+        preview: true,
+        opacity: true,
+        hue: true,
+        interaction: {
+          hex: true,
+          input: true,
+          save: true
+        }
+      }
+    });
+
+    pickr.on('change', (color) => {
+      corAtual = color.toHEXA().toString();
+      document.getElementById('corPreview').style.background = corAtual;
+    });
   </script>
 </body>
 </html>
