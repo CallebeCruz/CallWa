@@ -11,209 +11,111 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>CallWA</title>
   
-  <!-- iro.js para colorWheel -->
+  <!-- Dependências -->
   <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       text-align: center;
       background: #fdf6f8;
-      margin: 0;
-      padding: 0;
       color: #222;
-      transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+      transition: background 0.3s, color 0.3s;
     }
     .status {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: red;
+      display: inline-block; width: 12px; height: 12px;
+      border-radius: 50%; background: red;
     }
     .painel {
-      max-width: 400px;
-      margin: 20px auto;
-      padding: 20px;
-      border: 2px solid #ccc;
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      transition: background 0.3s;
+      max-width: 400px; margin: 20px auto; padding: 20px;
+      border: 2px solid #ccc; border-radius: 12px; background: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: background 0.3s;
     }
-
     input, button, select {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      margin: 5px 0;
-      padding: 12px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 10px;
-      background: #f3f3f3;
-      font-weight: 500;
+      width: 100%; margin: 5px 0; padding: 12px;
+      font-size: 1rem; border: none; border-radius: 10px;
+      background: #f3f3f3; font-weight: 500; transition: background 0.2s;
     }
-
-    button {
-      background: #FFD6E0;
-      color: #333;
-      cursor: pointer;
-      transition: all 0.2s ease-in-out;
+    button { background: #FFD6E0; color: #333; cursor: pointer; }
+    button:active { transform: scale(0.97); background: #ffb8c6; }
+    .botoes-grid, .botoes-modo {
+      display: grid; gap: 10px; margin-top: 10px;
     }
-    button:active {
-      transform: scale(0.97);
-      background: #ffb8c6;
-    }
-
-    .botoes-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .botoes-modo {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .botoes-modo button.ativo {
-      background: #ff3366;
-      color: white;
-    }
-
+    .botoes-grid { grid-template-columns: repeat(3,1fr); }
+    .botoes-modo { grid-template-columns: repeat(3,1fr); }
+    .botoes-modo button.ativo { background: #ff3366; color: #fff; }
     .cor-preview {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      display: inline-block;
-      margin: 10px auto;
-      border: 1px solid #333;
-      background: #FFD6E0;
+      width: 50px; height: 50px; border-radius: 50%;
+      margin: 10px auto; border: 1px solid #333; background: #FFD6E0;
     }
     #colorWheel {
-      margin: 10px auto;
-      display: flex;
-      justify-content: center;
+      margin: 10px auto; display: flex; justify-content: center;
+      animation: pulseWheel 2s infinite alternate;
     }
-
-    .esp-status {
-      margin-top: 10px;
-      font-size: 0.9rem;
-    }
+    .esp-status { margin-top: 10px; font-size: 0.9rem; }
     .esp-led {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      display: inline-block;
-      margin: 0 8px;
-      background: #ccc;
+      width: 16px; height: 16px; border-radius: 50%;
+      display: inline-block; margin: 0 8px; background: #ccc;
     }
-
-    /* Botão Dark Mode central acima do título */
-    #toggleTheme {
-      display: block;
-      margin: 10px auto 15px auto;
-      background: none;
-      border: none;
-      font-size: 1.8rem;
-      cursor: pointer;
-      color: #444;
-      transition: transform 0.4s ease;
+    .top-buttons {
+      display: flex; justify-content: center; align-items: center; gap: 15px;
     }
-
-    #toggleTheme.girando {
-      transform: rotate(360deg);
+    #toggleTheme, #toggleSettings {
+      background: none; border: none; font-size: 1.8rem;
+      cursor: pointer; color: #444; transition: transform 0.4s;
     }
-
-    /* Animação nos corações do título */
-    .pulse {
-      display: inline-block;
-      animation: pulse 1.2s infinite alternate;
+    #toggleTheme.girando { transform: rotate(360deg); }
+    #configPanel {
+      display: none; position: fixed; top:50%; left:50%;
+      transform: translate(-50%, -50%);
+      background: #fff; padding: 20px; border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3); width: 300px; text-align: left;
+      z-index: 4000;
     }
-
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.3); }
-    }
-
-    /* Dark mode */
+    #configPanel h3 { margin-bottom: 10px; }
+    #configPanel label { display: block; margin: 10px 0; }
+    /* Dark mode geral */
     body.dark {
-      background: #1c1c1c;
-      color: #f1f1f1;
+      background: #1c1c1c; color: #f1f1f1;
     }
-    body.dark .painel {
-      background: #2b2b2b;
-      border-color: #444;
+    body.dark .painel { background: #2b2b2b; border-color: #444; }
+    body.dark input, body.dark button, body.dark select {
+      background: #3b3b3b; color: #f1f1f1;
     }
-    body.dark input, 
-    body.dark button, 
-    body.dark select {
-      background: #3b3b3b;
-      color: #f1f1f1;
+    body.dark button { background: #ff4d6d; color: #fff; }
+    body.dark button:active { background: #ff3355; }
+    body.dark .cor-preview { border-color: #aaa; }
+    body.dark #toggleTheme, body.dark #toggleSettings { color: #f1f1f1; }
+    /* Dark mode no configPanel */
+    body.dark #configPanel {
+      background: #2b2b2b; color: #f1f1f1;
     }
-    body.dark button {
-      background: #ff4d6d;
-      color: white;
+    body.dark #configPanel button {
+      background: #ff4d6d; color: #fff;
     }
-    body.dark button:active {
-      background: #ff3355;
-    }
-    body.dark .cor-preview {
-      border: 1px solid #aaa;
-    }
-    body.dark #toggleTheme {
-      color: #f1f1f1;
-    }
-
+    body.dark #configPanel button:active { background: #ff3355; }
     /* Splash Screen */
     #splashScreen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #fdf6f8;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 3000;
-      transition: opacity 1s ease;
+      position: fixed; top: 0; left: 0; width:100%; height:100%;
+      background: #fdf6f8; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; z-index:3000;
+      transition: opacity 1s;
     }
-
     #splashScreen .logo {
-      width: clamp(120px, 25%, 200px);
-      height: auto;
-      margin-bottom: 20px;
-      image-rendering: pixelated;
-      animation: pulseHeart 1.2s infinite alternate;
+      width: clamp(120px,25%,200px); height:auto; margin-bottom:20px;
+      image-rendering: pixelated; animation: pulseHeart 1.2s infinite alternate;
     }
-
-    #splashScreen p {
+    #splashText {
+      font-size:1.2rem; color:#ff3366; min-height:50px;
       font-family: 'Inter', sans-serif;
-      font-size: 1.2rem;
-      text-align: center;
-      color: #ff3366;
     }
-
-    @keyframes pulseHeart {
-      from { transform: scale(1); }
-      to { transform: scale(1.2); }
-    }
-
-    @media (max-width: 500px) {
-      .painel {
-        width: 95%;
-        padding: 15px;
-      }
-      input, button, select {
-        font-size: 1rem;
-      }
+    @keyframes pulseHeart { from {transform:scale(1);} to {transform:scale(1.2);} }
+    @keyframes pulseWheel { from {transform:scale(1);} to {transform:scale(1.05);} }
+    @media(max-width:500px){
+      .painel{width:95%; padding:15px;}
+      input,button,select{font-size:1rem;}
     }
   </style>
 </head>
@@ -222,19 +124,28 @@
   <!-- Splash Screen -->
   <div id="splashScreen">
     <img src="Logo_CallWal.png" alt="Logo Coração" class="logo">
-    <p>Com todo amor:<br><strong>Callebe Cruz</strong>.</p>
+    <p id="splashText"></p>
+  </div>
+
+  <!-- Configurações -->
+  <div id="configPanel">
+    <h3>Configurações ⚙️</h3>
+    <label><input type="checkbox" id="vibrationToggle" checked> Ativar vibração</label>
+    <label><input type="checkbox" id="soundToggle" checked> Ativar som</label>
+    <button onclick="fecharConfig()">Fechar</button>
   </div>
 
   <div class="painel">
-    <!-- Botão Dark Mode no centro -->
-    <button id="toggleTheme">🌙</button>
+    <div class="top-buttons">
+      <button id="toggleTheme">🌙</button>
+      <button id="toggleSettings">⚙️</button>
+    </div>
 
-    <!-- Título com corações pulsantes -->
     <h2><span class="pulse">❤️</span> CallWa <span class="pulse">❤️</span></h2>
 
     <label>Estado de Conexão: <span class="status" id="status"></span> <span id="ping">0</span>ms</label>
 
-    <div style="margin-top: 10px">
+    <div style="margin-top:10px">
       <label>Enviar para:</label>
       <select id="destino">
         <option value="waleria">Waléria</option>
@@ -244,194 +155,198 @@
     </div>
 
     <div class="botoes-grid">
-      <button onclick="enviarComando('saudades')">Te amo ❤️</button>
-      <button onclick="enviarComando('pensando')">Tô pensando em você</button>
-      <button onclick="enviarComando('desculpas')">Me desculpa</button>
-      <button onclick="enviarComando('to_aqui')">Tô aquiii</button>
-      <button onclick="enviarComando('surpresinha')">👀</button>
-      <button onclick="enviarComando('bajulinho')">Bajulinho</button>
+      <button onclick="clickBtn('saudades')">Te amo ❤️</button>
+      <button onclick="clickBtn('pensando')">Tô pensando em você</button>
+      <button onclick="clickBtn('desculpas')">Me desculpa</button>
+      <button onclick="clickBtn('to_aqui')">Tô aquiii</button>
+      <button onclick="clickBtn('surpresinha')">👀</button>
+      <button onclick="clickBtn('bajulinho')">Bajulinho</button>
     </div>
 
     <label>Velocidade:</label>
-    <input id="velocidade" type="range" min="0" max="100" value="50" 
+    <input id="velocidade" type="range" min="0" max="100" value="50"
       oninput="document.getElementById('velLabel').innerText = this.value + '%'">
     <div id="velLabel">50%</div>
 
-    <label style="font-weight: bold">Aspectro de Cor:</label>
+    <label style="font-weight:bold">Aspectro de Cor:</label>
     <div id="colorWheel"></div>
     <div class="cor-preview" id="corPreview"></div>
 
     <div class="botoes-modo">
       <button id="modoEstatico" onclick="enviarModo('estatico', this)">Estático</button>
-      <button id="modoBlynk" onclick="enviarComando('aspectro')">Blynk</button>
+      <button id="modoBlynk" onclick="clickBtn('aspectro')">Blynk</button>
       <button id="modoSequencial" onclick="enviarModo('sequencial', this)">Sequencial</button>
     </div>
 
     <div class="esp-status">
-      <p>ESP32 Callebe: <span class="esp-led" id="statusCallebe"></span> | ESP32 Waléria: <span class="esp-led" id="statusWaleria"></span></p>
+      <p>ESP32 Callebe: <span class="esp-led" id="statusCallebe"></span> |
+         ESP32 Waléria: <span class="esp-led" id="statusWaleria"></span></p>
     </div>
   </div>
 
   <script>
+    // Elementos
     const statusCircle = document.getElementById('status');
-    const pingText = document.getElementById('ping');
-    const ledCallebe = document.getElementById('statusCallebe');
-    const ledWaleria = document.getElementById('statusWaleria');
-    const corPreview = document.getElementById('corPreview');
-    const toggleThemeBtn = document.getElementById('toggleTheme');
+    const pingText     = document.getElementById('ping');
+    const ledCallebe   = document.getElementById('statusCallebe');
+    const ledWaleria   = document.getElementById('statusWaleria');
+    const corPreview   = document.getElementById('corPreview');
+    const toggleThemeBtn    = document.getElementById('toggleTheme');
+    const toggleSettingsBtn = document.getElementById('toggleSettings');
+    const configPanel       = document.getElementById('configPanel');
+    const splashText        = document.getElementById('splashText');
 
-    let client;
-    let corAtual = '#FFD6E0';
-    let lastPing = Date.now();
-    let lastSeen = { ESP_CALL: 0, ESP_WAL: 0 };
+    // Estados
+    let client, corAtual = '#FFD6E0', lastPing = Date.now(), lastSeen = { ESP_CALL:0, ESP_WAL:0 };
+    let vibrationEnabled = true, soundEnabled = true;
 
-    // Dark mode com preferências salvas
-    if (localStorage.getItem('theme') === 'dark') {
-      document.body.classList.add('dark');
-      toggleThemeBtn.textContent = '☀️';
-    } else if (localStorage.getItem('theme') === 'light') {
-      document.body.classList.remove('dark');
-      toggleThemeBtn.textContent = '🌙';
-    } else {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.body.classList.add('dark');
-        toggleThemeBtn.textContent = '☀️';
-      }
+    // Toggles vibração e som
+    document.getElementById('vibrationToggle').onchange = e => vibrationEnabled = e.target.checked;
+    document.getElementById('soundToggle').onchange     = e => soundEnabled     = e.target.checked;
+
+    toggleSettingsBtn.onclick = () => configPanel.style.display = 'block';
+    function fecharConfig() { configPanel.style.display = 'none'; }
+
+    // Dark mode init
+    if (localStorage.theme === 'dark') {
+      document.body.classList.add('dark'); toggleThemeBtn.textContent='☀️';
+    } else if (localStorage.theme==='light') {
+      document.body.classList.remove('dark'); toggleThemeBtn.textContent='🌙';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.body.classList.add('dark'); toggleThemeBtn.textContent='☀️';
     }
 
-    // Alternar tema manualmente
-    toggleThemeBtn.addEventListener('click', () => {
+    toggleThemeBtn.onclick = ()=>{
       document.body.classList.toggle('dark');
-      const isDark = document.body.classList.contains('dark');
-      toggleThemeBtn.textContent = isDark ? '☀️' : '🌙';
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-
-      // animação de giro ao clicar
+      const dark = document.body.classList.contains('dark');
+      toggleThemeBtn.textContent = dark ? '☀️' : '🌙';
+      localStorage.setItem('theme', dark?'dark':'light');
       toggleThemeBtn.classList.add('girando');
-      setTimeout(() => toggleThemeBtn.classList.remove('girando'), 400);
-    });
+      setTimeout(()=>toggleThemeBtn.classList.remove('girando'),400);
+    };
 
-    // Splash Screen desaparecendo após 2.5s
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        document.getElementById('splashScreen').style.opacity = '0';
-        setTimeout(() => {
-          document.getElementById('splashScreen').style.display = 'none';
-        }, 1000);
-      }, 3000);
-    });
+    // Splash typewriter
+    const splashMessage = "Com todo amor: de <strong>Callebe Cruz</strong>.";
+let charIndex = 0;
+let tempMessage = "";
 
-    function conectarMQTT() {
-      const options = {
-        username: 'WEB_CALLWA',
-        password: 'Serzinhos2025',
-        clientId: 'CallWeb'
-      };
+function typeWriter() {
+  const currentChar = splashMessage.charAt(charIndex);
+  tempMessage += currentChar;
 
-      client = mqtt.connect('wss://70d4da565d9c476782999dc9303945b0.s1.eu.hivemq.cloud:8884/mqtt', options);
+  // Atualiza o conteúdo como HTML (para aplicar o <strong>)
+  splashText.innerHTML = tempMessage;
 
-      client.on('connect', () => {
-        statusCircle.style.background = 'green';
-        lastPing = Date.now();
+  charIndex++;
+  if (charIndex < splashMessage.length) {
+    setTimeout(typeWriter, 80);
+  }
+}
+
+
+    // Onload: splash + MQTT
+    window.onload = () => {
+      // splash
+      typeWriter();
+      setTimeout(()=>{
+        document.getElementById('splashScreen').style.opacity='0';
+        setTimeout(()=>{
+          document.getElementById('splashScreen').style.display='none';
+        },1000);
+      },4000);
+      // conecta MQTT
+      conectarMQTT();
+    };
+
+    // Conectar MQTT
+    function conectarMQTT(){
+      client = mqtt.connect('wss://70d4da565d9c476782999dc9303945b0.s1.eu.hivemq.cloud:8884/mqtt', {
+        username:'WEB_CALLWA', password:'Serzinhos2025', clientId:'CallWeb'
+      });
+      client.on('connect',()=>{
+        statusCircle.style.background='green'; lastPing=Date.now();
         client.subscribe('luminaria/ping');
       });
-
-      client.on('message', (topic, message) => {
-        if (topic === 'luminaria/ping') {
-          try {
-            const payload = JSON.parse(message.toString());
-            if (payload.id && payload.status === 'ok' && payload.id !== 'CallWeb') {
-              const pingValue = Date.now() - lastPing;
-              pingText.textContent = `${pingValue}`;
-              lastPing = Date.now();
-              if (payload.id === 'ESP_CALL') lastSeen.ESP_CALL = Date.now();
-              else if (payload.id === 'ESP_WAL') lastSeen.ESP_WAL = Date.now();
+      client.on('message',(topic,msg)=>{
+        if(topic==='luminaria/ping'){
+          try{
+            const p=JSON.parse(msg.toString());
+            if(p.id&&p.status==='ok'&&p.id!=='CallWeb'){
+              const pv=Date.now()-lastPing;
+              pingText.textContent=`${pv}`;
+              lastPing=Date.now();
+              if(p.id==='ESP_CALL') lastSeen.ESP_CALL=Date.now();
+              else if(p.id==='ESP_WAL') lastSeen.ESP_WAL=Date.now();
             }
-          } catch (e) {
-            console.warn('Erro ao interpretar mensagem:', e);
-          }
+          }catch{}
         }
       });
-
-      client.on('error', () => statusCircle.style.background = 'red');
-      client.on('close', () => statusCircle.style.background = 'red');
-
-      setInterval(() => {
-        if (client && client.connected) {
-          client.publish('luminaria/ping', JSON.stringify({ id: 'CallWeb', from: 'web', status: 'ok', timestamp: Date.now() }));
+      client.on('error',()=>statusCircle.style.background='red');
+      client.on('close',()=>statusCircle.style.background='red');
+      setInterval(()=>{
+        if(client&&client.connected){
+          client.publish('luminaria/ping',JSON.stringify({
+            id:'CallWeb',from:'web',status:'ok',timestamp:Date.now()
+          }));
         }
-        const now = Date.now();
-        ledCallebe.style.background = now - lastSeen.ESP_CALL < 3000 ? 'lime' : '#ccc';
-        ledWaleria.style.background = now - lastSeen.ESP_WAL < 3000 ? 'lime' : '#ccc';
-      }, 1000);
+        const now=Date.now();
+        ledCallebe.style.background= now-lastSeen.ESP_CALL<3000?'lime':'#ccc';
+        ledWaleria.style.background= now-lastSeen.ESP_WAL<3000?'lime':'#ccc';
+      },1000);
     }
 
-    function enviarComando(efeito) {
-      if (!client || !client.connected) return;
+    // Feedback tátil e sonoro
+    function playSound(){
+      if(!soundEnabled) return;
+      const audio = new Audio('https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg');
+      audio.volume=0.2; audio.play();
+    }
+    function clickBtn(efeito){
+      if(vibrationEnabled&&navigator.vibrate) navigator.vibrate(50);
+      playSound();
+      enviarComando(efeito);
+    }
+
+    // Envio comando
+    function enviarComando(efeito){
+      if(!client||!client.connected) return;
       const destino = document.getElementById('destino').value;
       const velocidade = document.getElementById('velocidade').value;
-
-      let destinoFormatado;
-      if (destino === 'waleria') destinoFormatado = 'ESP_WAL';
-      else if (destino === 'callebe') destinoFormatado = 'ESP_CALL';
-      else destinoFormatado = 'ALL';
-
-      const payload = {
-        from: "web",
-        to: destinoFormatado,
-        efeito: efeito,
-        cor: corAtual,
-        velocidade: velocidade
-      };
-
-      publicarPayload(destinoFormatado, payload);
+      let dest = destino==='waleria' ? 'ESP_WAL'
+               : destino==='callebe'? 'ESP_CALL' : 'ALL';
+      const payload={ from:'web', to:dest, efeito, cor:corAtual, velocidade };
+      publicarPayload(dest,payload);
     }
 
-    function enviarModo(modo, btn) {
-      if (!client || !client.connected) return;
+    // Envio modo
+    function enviarModo(modo,btn){
+      if(!client||!client.connected) return;
       const destino = document.getElementById('destino').value;
-
-      let destinoFormatado;
-      if (destino === 'waleria') destinoFormatado = 'ESP_WAL';
-      else if (destino === 'callebe') destinoFormatado = 'ESP_CALL';
-      else destinoFormatado = 'ALL';
-
-      const payload = {
-        from: "web",
-        to: destinoFormatado,
-        modo: modo
-      };
-
-      document.querySelectorAll('.botoes-modo button').forEach(b => b.classList.remove('ativo'));
+      let dest = destino==='waleria'? 'ESP_WAL'
+               : destino==='callebe'? 'ESP_CALL':'ALL';
+      document.querySelectorAll('.botoes-modo button').forEach(b=>b.classList.remove('ativo'));
       btn.classList.add('ativo');
-
-      publicarPayload(destinoFormatado, payload);
+      const payload={ from:'web', to:dest, modo };
+      publicarPayload(dest,payload);
     }
 
-    function publicarPayload(destinoFormatado, payload) {
-      if (destinoFormatado === 'ALL') {
-        client.publish('luminaria/para_voce', JSON.stringify(payload));
-        client.publish('luminaria/para_waleria', JSON.stringify(payload));
-      } else if (destinoFormatado === 'ESP_CALL') {
-        client.publish('luminaria/para_voce', JSON.stringify(payload));
-      } else if (destinoFormatado === 'ESP_WAL') {
-        client.publish('luminaria/para_waleria', JSON.stringify(payload));
+    // Publica no tópico correto
+    function publicarPayload(dest,payload){
+      if(dest==='ALL'){
+        client.publish('luminaria/para_voce',JSON.stringify(payload));
+        client.publish('luminaria/para_waleria',JSON.stringify(payload));
+      } else if(dest==='ESP_CALL'){
+        client.publish('luminaria/para_voce',JSON.stringify(payload));
+      } else {
+        client.publish('luminaria/para_waleria',JSON.stringify(payload));
       }
     }
 
-    window.onload = conectarMQTT;
-
-    // Inicializa o colorWheel do iro.js
-    const colorWheel = new iro.ColorPicker("#colorWheel", {
-      width: 220,
-      color: corAtual,
-      borderWidth: 1,
-      borderColor: "#ccc",
-    });
-
-    colorWheel.on("color:change", function (color) {
-      corAtual = color.hexString;
-      corPreview.style.background = corAtual;
+    // Color wheel
+    const colorWheel = new iro.ColorPicker("#colorWheel",{ width:220, color:corAtual, borderWidth:1, borderColor:"#ccc" });
+    colorWheel.on("color:change",color=>{
+      corAtual=color.hexString;
+      corPreview.style.background=corAtual;
     });
   </script>
 </body>
