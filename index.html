@@ -226,7 +226,10 @@
     };
 
     // Splash typewriter
-    const splashMessage = "Com todo amor: de <strong>Callebe Cruz</strong>.";
+    const splashMessage = 
+  "Com todo amor: de <strong>Callebe Cruz</strong>.<br>" +
+  "Uma dedicatória a <strong>Waléria Valério</strong>.";
+
 let charIndex = 0;
 let tempMessage = "";
 
@@ -234,14 +237,14 @@ function typeWriter() {
   const currentChar = splashMessage.charAt(charIndex);
   tempMessage += currentChar;
 
-  // Atualiza o conteúdo como HTML (para aplicar o <strong>)
-  splashText.innerHTML = tempMessage;
+  splashText.innerHTML = tempMessage; // Interpreta <strong> e <br>
 
   charIndex++;
   if (charIndex < splashMessage.length) {
     setTimeout(typeWriter, 80);
   }
 }
+
 
 
     // Onload: splash + MQTT
@@ -253,7 +256,7 @@ function typeWriter() {
         setTimeout(()=>{
           document.getElementById('splashScreen').style.display='none';
         },1000);
-      },4000);
+      },8000);
       // conecta MQTT
       conectarMQTT();
     };
