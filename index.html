@@ -117,10 +117,59 @@
       .painel{width:95%; padding:15px;}
       input,button,select{font-size:1rem;}
     }
+    /*CSS para Hearts*/
+    #heart-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.heart {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #ff3366;
+  transform: rotate(45deg);
+  animation: float 6s linear infinite;
+  opacity: 0.7;
+}
+
+.heart::before,
+.heart::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #ff3366;
+  border-radius: 50%;
+}
+
+.heart::before {
+  top: -10px;
+  left: 0;
+}
+.heart::after {
+  left: -10px;
+  top: 0;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0) rotate(45deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-800px) rotate(45deg);
+    opacity: 0;
+  }
+}
+
   </style>
 </head>
 <body>
-
+  
   <!-- Splash Screen -->
   <div id="splashScreen">
     <img src="Logo_CallWal.png" alt="Logo Coração" class="logo">
@@ -130,6 +179,8 @@
   <!-- Configurações -->
   <div id="configPanel">
     <h3>Configurações ⚙️</h3>
+    
+    <label><input type="checkbox" id="heartToggle" checked> Efeitos de corações</label>
     <label><input type="checkbox" id="vibrationToggle" checked> Ativar vibração</label>
     <label><input type="checkbox" id="soundEffectToggle" checked> Ativar sons de clique</label>
     <label><input type="checkbox" id="musicToggle" checked> Música de fundo</label>
@@ -139,6 +190,9 @@
 
     <button onclick="fecharConfig()">Fechar</button>
   </div>
+
+  <!-- Efeitos Hearts -->
+  <div id="heart-container"></div>
 
   <div class="painel">
     <div class="top-buttons">
@@ -288,6 +342,23 @@ if (isIOS) {
     
     };
 
+// Efeitos Heart Java Script
+    function criarCoracao() {
+      const heart = document.createElement('div');
+          heart.className = 'heart';
+          heart.style.left = Math.random() * 100 + 'vw';
+          heart.style.animationDuration = (3 + Math.random() * 3) + 's';
+          document.getElementById('heart-container').appendChild(heart);
+
+        setTimeout(() => {
+        heart.remove();
+      }, 6000);
+    }
+
+// Começa os corações a cada 500ms
+setInterval(criarCoracao, 500);
+
+
     // Conectar MQTT
     function conectarMQTT(){
       client = mqtt.connect('wss://70d4da565d9c476782999dc9303945b0.s1.eu.hivemq.cloud:8884/mqtt', {
@@ -378,6 +449,15 @@ if (isIOS) {
       corAtual=color.hexString;
       corPreview.style.background=corAtual;
     });
+
+    // Efeitos Hearts
+  let heartEffectEnabled = true;
+document.getElementById('heartToggle').onchange = e => heartEffectEnabled = e.target.checked;
+
+setInterval(() => {
+  if (heartEffectEnabled) criarCoracao();
+}, 500);
+
 
     // Música de fundo
   let backgroundAudio;
