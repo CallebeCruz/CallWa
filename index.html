@@ -351,6 +351,32 @@ function typeWriter() {
       corAtual=color.hexString;
       corPreview.style.background=corAtual;
     });
+
+    // Música de fundo
+  let backgroundAudio;
+  window.addEventListener('DOMContentLoaded', () => {
+    backgroundAudio = new Audio('musica.mp3'); // nome do arquivo no GitHub
+    backgroundAudio.loop = true;
+    backgroundAudio.volume = 0.5;
+    backgroundAudio.play().catch(() => {
+      // Autoplay bloqueado, tocará com interação
+      document.body.addEventListener('click', () => {
+        backgroundAudio.play();
+      }, { once: true });
+    });
+  });
+
+  // Controle de música nas configurações
+  const soundToggle = document.getElementById('soundToggle');
+  soundToggle.addEventListener('change', () => {
+    if (soundToggle.checked) {
+      backgroundAudio.volume = 0.5;
+      backgroundAudio.play();
+    } else {
+      backgroundAudio.pause();
+    }
+  });
+    
   </script>
 </body>
 </html>
