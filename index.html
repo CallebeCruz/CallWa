@@ -256,6 +256,18 @@ function typeWriter() {
     window.onload = () => {
       // splash
       typeWriter();
+      
+       // iniciar música
+  backgroundAudio = new Audio('musica.mp3');
+  backgroundAudio.loop = true;
+  backgroundAudio.volume = parseInt(document.getElementById('musicVolume').value) / 100;
+
+  backgroundAudio.play().catch(() => {
+    document.body.addEventListener('click', () => {
+      backgroundAudio.play();
+    }, { once: true });
+  });
+
       setTimeout(()=>{
         document.getElementById('splashScreen').style.opacity='0';
         setTimeout(()=>{
@@ -264,6 +276,16 @@ function typeWriter() {
       },8000);
       // conecta MQTT
       conectarMQTT();
+      // detecção de IOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+if (isIOS) {
+  const vol = document.getElementById('musicVolume');
+  const label = document.getElementById('label[for="musicVolume"]');
+  if (vol) vol.style.display = 'none';
+  if (label) label.style.display = 'none';
+}
+
+    
     };
 
     // Conectar MQTT
