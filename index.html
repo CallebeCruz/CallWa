@@ -117,6 +117,19 @@
       .painel{width:95%; padding:15px;}
       input,button,select{font-size:1rem;}
     }
+
+     /*CSS para ajustar os Toggles do Config*/
+   #configPanel label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+  }
+  #configPanel input[type="checkbox"] {
+      transform: scale(1.2);
+      accent-color: #ff3366; /* opcional: cor personalizada */
+  }
+
     /*CSS para Hearts*/
     #heart-container {
   position: fixed;
@@ -356,10 +369,6 @@ if (isIOS) {
         heart.remove();
       }, 6000);
     }
-
-// Começa os corações a cada 500ms
-setInterval(criarCoracao, 500);
-
 
     // Conectar MQTT
     function conectarMQTT(){
