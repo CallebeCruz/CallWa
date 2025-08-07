@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta name="format-detection" content="telephone=no">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -184,16 +185,35 @@
 
 .toggle-row {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
   margin: 10px 0;
   font-size: 1rem;
+  width: 100%;
+  flex-wrap: nowrap;
+  word-break: keep-all;
+  white-space: nowrap;
 }
 
 .toggle-row input[type="checkbox"] {
-  transform: scale(1.5);
+  flex-shrink: 0;
+  transform: scale(1.4);
   accent-color: #ff3366;
+  -webkit-appearance: none;
+  appearance: auto;
+}
+  
+    @media screen and (max-width: 500px) {
+  #configPanel {
+    width: 90vw;
+  }
+
+  .toggle-row {
+    font-size: 0.95rem;
+    gap: 8px;
+  }
 }
 
   </style>
