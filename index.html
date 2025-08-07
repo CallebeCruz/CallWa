@@ -182,6 +182,20 @@
   }
 }
 
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+  font-size: 1rem;
+}
+
+.toggle-row input[type="checkbox"] {
+  transform: scale(1.5);
+  accent-color: #ff3366;
+}
+
   </style>
 </head>
 <body>
@@ -193,20 +207,34 @@
   </div>
 
   <!-- Configurações -->
-  <div id="configPanel">
-    <h3>Configurações ⚙️</h3>
-    
-    <label>Ativar vibração <input type="checkbox" id="vibrationToggle" checked></label>
-    <label>Ativar sons de clique <input type="checkbox" id="soundEffectToggle" checked></label>
-    <label>Música de fundo <input type="checkbox" id="musicToggle" checked></label>
-    <label>Efeitos de corações <input type="checkbox" id="heartToggle" checked></label>
+ <div id="configPanel">
+  <h3>Configurações ⚙️</h3>
 
+  <label class="toggle-row" for="vibrationToggle">
+    <span>Ativar vibração</span>
+    <input type="checkbox" id="vibrationToggle" checked>
+  </label>
 
-    <label for="musicVolume">Volume da música:</label>
-    <input type="range" id="musicVolume" min="0" max="100" value="50">
+  <label class="toggle-row" for="soundEffectToggle">
+    <span>Ativar sons de clique</span>
+    <input type="checkbox" id="soundEffectToggle" checked>
+  </label>
 
-    <button onclick="fecharConfig()">Fechar</button>
-  </div>
+  <label class="toggle-row" for="musicToggle">
+    <span>Música de fundo</span>
+    <input type="checkbox" id="musicToggle" checked>
+  </label>
+
+  <label class="toggle-row" for="heartToggle">
+    <span>Efeitos de corações</span>
+    <input type="checkbox" id="heartToggle" checked>
+  </label>
+
+  <label for="musicVolume">Volume da música:</label>
+  <input type="range" id="musicVolume" min="0" max="100" value="50">
+
+  <button onclick="fecharConfig()">Fechar</button>
+</div>
 
   <!-- Efeitos Hearts -->
   <div id="heart-container"></div>
