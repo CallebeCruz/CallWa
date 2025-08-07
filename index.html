@@ -183,6 +183,7 @@
   }
 }
 
+/* Estilo universal para cada linha de toggle */
 .toggle-row {
   display: flex;
   justify-content: space-between;
@@ -191,31 +192,48 @@
   margin: 12px 0;
   font-size: 1rem;
   width: 100%;
+  line-height: 1.2;
 }
 
+/* Texto do label */
 .toggle-row label {
   flex-grow: 1;
   white-space: nowrap;
+  margin: 0;
 }
 
+/* Checkbox bonito e proporcional */
 .toggle-row input[type="checkbox"] {
-  transform: scale(1.5);
-  accent-color: #ff3366;
-  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid #ff3366;
+  background-color: #fff;
+  position: relative;
+  cursor: pointer;
 }
-  
-    @media screen and (max-width: 500px) {
-  #configPanel {
-    width: 90vw;
-  }
 
+.toggle-row input[type="checkbox"]:checked::before {
+  content: "✔";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  color: #ff3366;
+}
+
+/* Media query só se quiser reforçar ajustes em telas pequenas */
+@media screen and (max-width: 500px) {
   .toggle-row {
     font-size: 0.95rem;
-    gap: 6px;
+    gap: 10px;
   }
-      
+
   .toggle-row label {
-    max-width: 80%;
+    max-width: 75%;
   }
 }
 
