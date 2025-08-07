@@ -271,6 +271,9 @@
   <input type="checkbox" id="heartToggle" checked>
 </div>
 
+<label for="musicVolume">Volume da música:</label>
+<input type="range" id="musicVolume" min="0" max="100" value="50">
+
 
   <button onclick="fecharConfig()">Fechar</button>
 </div>
@@ -398,13 +401,20 @@ function typeWriter() {
        // iniciar música
   backgroundAudio = new Audio('musica.mp3');
   backgroundAudio.loop = true;
-  backgroundAudio.volume = parseInt(document.getElementById('musicVolume').value) / 100;
+ const musicVolumeSlider = document.getElementById('musicVolume');
+if (musicVolumeSlider) {
+  backgroundAudio.volume = parseInt(musicVolumeSlider.value) / 100;
+  musicVolumeSlider.oninput = () => {
+    backgroundAudio.volume = parseInt(musicVolumeSlider.value) / 100;
+  };
+}
 
-  backgroundAudio.play().catch(() => {
-    document.body.addEventListener('click', () => {
-      backgroundAudio.play();
-    }, { once: true });
-  });
+backgroundAudio.play().catch(() => {
+  document.body.addEventListener('click', () => {
+    backgroundAudio.play();
+  }, { once: true });
+});
+
 
       setTimeout(()=>{
         document.getElementById('splashScreen').style.opacity='0';
@@ -412,6 +422,7 @@ function typeWriter() {
           document.getElementById('splashScreen').style.display='none';
         },1000);
       },8000);
+      
       // conecta MQTT
       conectarMQTT();
       // detecção de IOS
