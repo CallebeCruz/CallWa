@@ -185,24 +185,23 @@
 
 .toggle-row {
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin: 10px 0;
+  margin: 12px 0;
   font-size: 1rem;
   width: 100%;
-  flex-wrap: nowrap;
-  word-break: keep-all;
+}
+
+.toggle-row label {
+  flex-grow: 1;
   white-space: nowrap;
 }
 
 .toggle-row input[type="checkbox"] {
-  flex-shrink: 0;
-  transform: scale(1.4);
+  transform: scale(1.5);
   accent-color: #ff3366;
-  -webkit-appearance: none;
-  appearance: auto;
+  flex-shrink: 0;
 }
   
     @media screen and (max-width: 500px) {
@@ -212,7 +211,11 @@
 
   .toggle-row {
     font-size: 0.95rem;
-    gap: 8px;
+    gap: 6px;
+  }
+      
+  .toggle-row label {
+    max-width: 80%;
   }
 }
 
@@ -230,28 +233,26 @@
  <div id="configPanel">
   <h3>Configurações ⚙️</h3>
 
-  <label class="toggle-row" for="vibrationToggle">
-    <span>Ativar vibração</span>
-    <input type="checkbox" id="vibrationToggle" checked>
-  </label>
+  <div class="toggle-row">
+  <label for="vibrationToggle">Ativar vibração</label>
+  <input type="checkbox" id="vibrationToggle" checked>
+</div>
 
-  <label class="toggle-row" for="soundEffectToggle">
-    <span>Ativar sons de clique</span>
-    <input type="checkbox" id="soundEffectToggle" checked>
-  </label>
+<div class="toggle-row">
+  <label for="soundEffectToggle">Ativar sons de clique</label>
+  <input type="checkbox" id="soundEffectToggle" checked>
+</div>
 
-  <label class="toggle-row" for="musicToggle">
-    <span>Música de fundo</span>
-    <input type="checkbox" id="musicToggle" checked>
-  </label>
+<div class="toggle-row">
+  <label for="musicToggle">Música de fundo</label>
+  <input type="checkbox" id="musicToggle" checked>
+</div>
 
-  <label class="toggle-row" for="heartToggle">
-    <span>Efeitos de corações</span>
-    <input type="checkbox" id="heartToggle" checked>
-  </label>
+<div class="toggle-row">
+  <label for="heartToggle">Efeitos de corações</label>
+  <input type="checkbox" id="heartToggle" checked>
+</div>
 
-  <label for="musicVolume">Volume da música:</label>
-  <input type="range" id="musicVolume" min="0" max="100" value="50">
 
   <button onclick="fecharConfig()">Fechar</button>
 </div>
