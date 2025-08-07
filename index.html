@@ -181,10 +181,10 @@
   <div id="configPanel">
     <h3>Configurações ⚙️</h3>
     
-    <label><input type="checkbox" id="heartToggle" checked> Efeitos de corações</label>
     <label><input type="checkbox" id="vibrationToggle" checked> Ativar vibração</label>
     <label><input type="checkbox" id="soundEffectToggle" checked> Ativar sons de clique</label>
     <label><input type="checkbox" id="musicToggle" checked> Música de fundo</label>
+    <label><input type="checkbox" id="heartToggle" checked> Efeitos de corações</label>
 
     <label for="musicVolume">Volume da música:</label>
     <input type="range" id="musicVolume" min="0" max="100" value="50">
@@ -349,6 +349,7 @@ if (isIOS) {
           heart.className = 'heart';
           heart.style.left = Math.random() * 100 + 'vw';
           heart.style.animationDuration = (3 + Math.random() * 3) + 's';
+          heart.style.transform = `scale(${0.8 + Math.random() * 0.6}) rotate(45deg)`;
           document.getElementById('heart-container').appendChild(heart);
 
         setTimeout(() => {
