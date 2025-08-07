@@ -128,6 +128,7 @@
 
 .heart {
   position: absolute;
+  bottom: 0; /* <-- Começa na parte inferior da tela */
   width: 20px;
   height: 20px;
   background-color: #ff3366;
@@ -161,7 +162,7 @@
     opacity: 0.8;
   }
   100% {
-    transform: translateY(-800px) rotate(45deg);
+    transform: translateY(-100vh) rotate(45deg);
     opacity: 0;
   }
 }
