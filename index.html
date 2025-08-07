@@ -121,12 +121,14 @@
      /*CSS para ajustar os Toggles do Config*/
    #configPanel label {
       display: flex;
+      justify-content: space-between;
       align-items: center;
       gap: 10px;
       margin: 10px 0;
+      font-size: 0.95rem;
   }
   #configPanel input[type="checkbox"] {
-      transform: scale(1.2);
+      transform: scale(1.4);
       accent-color: #ff3366; /* opcional: cor personalizada */
   }
 
@@ -194,10 +196,11 @@
   <div id="configPanel">
     <h3>Configurações ⚙️</h3>
     
-    <label><input type="checkbox" id="vibrationToggle" checked> Ativar vibração</label>
-    <label><input type="checkbox" id="soundEffectToggle" checked> Ativar sons de clique</label>
-    <label><input type="checkbox" id="musicToggle" checked> Música de fundo</label>
-    <label><input type="checkbox" id="heartToggle" checked> Efeitos de corações</label>
+    <label>Ativar vibração <input type="checkbox" id="vibrationToggle" checked></label>
+    <label>Ativar sons de clique <input type="checkbox" id="soundEffectToggle" checked></label>
+    <label>Música de fundo <input type="checkbox" id="musicToggle" checked></label>
+    <label>Efeitos de corações <input type="checkbox" id="heartToggle" checked></label>
+
 
     <label for="musicVolume">Volume da música:</label>
     <input type="range" id="musicVolume" min="0" max="100" value="50">
