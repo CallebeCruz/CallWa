@@ -131,7 +131,12 @@
   <div id="configPanel">
     <h3>Configurações ⚙️</h3>
     <label><input type="checkbox" id="vibrationToggle" checked> Ativar vibração</label>
-    <label><input type="checkbox" id="soundToggle" checked> Ativar som</label>
+    <label><input type="checkbox" id="soundEffectToggle" checked> Ativar sons de clique</label>
+    <label><input type="checkbox" id="musicToggle" checked> Música de fundo</label>
+
+    <label for="musicVolume">Volume da música:</label>
+    <input type="range" id="musicVolume" min="0" max="100" value="50">
+
     <button onclick="fecharConfig()">Fechar</button>
   </div>
 
@@ -202,7 +207,7 @@
 
     // Toggles vibração e som
     document.getElementById('vibrationToggle').onchange = e => vibrationEnabled = e.target.checked;
-    document.getElementById('soundToggle').onchange     = e => soundEnabled     = e.target.checked;
+    document.getElementById('soundEffectToggle').onchange     = e => soundEnabled     = e.target.checked;
 
     toggleSettingsBtn.onclick = () => configPanel.style.display = 'block';
     function fecharConfig() { configPanel.style.display = 'none'; }
@@ -366,16 +371,28 @@ function typeWriter() {
     });
   });
 
-  // Controle de música nas configurações
-  const soundToggle = document.getElementById('soundToggle');
-  soundToggle.addEventListener('change', () => {
-    if (soundToggle.checked) {
-      backgroundAudio.volume = 0.5;
-      backgroundAudio.play();
-    } else {
-      backgroundAudio.pause();
-    }
-  });
+  // Controles do som e música
+const soundEffectToggle = document.getElementById('soundEffectToggle');
+const musicToggle = document.getElementById('musicToggle');
+const musicVolumeSlider = document.getElementById('musicVolume');
+
+soundEffectToggle.onchange = () => {
+  soundEnabled = soundEffectToggle.checked;
+};
+
+musicToggle.onchange = () => {
+  if (musicToggle.checked) {
+    backgroundAudio.play();
+  } else {
+    backgroundAudio.pause();
+  }
+};
+
+musicVolumeSlider.oninput = () => {
+  const volume = parseInt(musicVolumeSlider.value) / 100;
+  backgroundAudio.volume = volume;
+};
+
     
   </script>
 </body>
