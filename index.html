@@ -319,10 +319,17 @@
     <div class="cor-preview" id="corPreview"></div>
 
     <div class="botoes-modo">
-      <button id="modoEstatico" onclick="enviarModo('estatico', this)">Estático</button>
-      <button id="modoBlynk" onclick="clickBtn('aspectro')">Blynk</button>
-      <button id="modoSequencial" onclick="enviarModo('sequencial', this)">Sequencial</button>
+  <button id="modoEstatico" onclick="enviarModo('estatico', this)">Estático</button>
+  <button id="modoBlynk" onclick="clickBtn('aspectro')">Blynk</button>
+  <button id="modoSequencial" onclick="enviarModo('sequencial', this)">Sequencial</button>
     </div>
+
+    <button id="btnDesligar"
+        style="margin-top:12px; background:#ddd; color:#333; width:100%;"
+        onclick="enviarDesligar()">
+        Desligar luminária
+    </button>
+
 
     <div class="esp-status">
       <p>ESP32 Callebe: <span class="esp-led" id="statusCallebe"></span> |
@@ -511,18 +518,68 @@ if (isIOS) {
       publicarPayload(dest,payload);
     }
 
-    // Envio modo
-    function enviarModo(modo,btn){
-      if(!client||!client.connected) return;
-      const destino = document.getElementById('destino').value;
-      let dest = destino==='waleria'? 'ESP_WAL'
-               : destino==='callebe'? 'ESP_CALL':'ALL';
-      document.querySelectorAll('.botoes-modo button').forEach(b=>b.classList.remove('ativo'));
-      btn.classList.add('ativo');
-      const payload={ from:'web', to:dest, modo };
-      publicarPayload(dest,payload);
-    }
+    // Envio modo (Estático / Sequencial) usando "efeito" + corAtual
+function enviarModo(modo, btn){
+  if (!client || !client.connected) return;
 
+  const destino = document.getElementById('destino').value;
+  let dest = destino === 'waleria' ? 'ESP_WAL'
+           : destino === 'callebe' ? 'ESP_CALL'
+           : 'ALL';
+
+  // Visual: marca botão ativo
+  document.querySelectorAll('.botoes-modo button')
+          .forEach(b => b.classList.remove('ativo'));
+  if (btn) btn.classList.add('ativo');
+
+  const velocidade = document.getElementById('velocidade').value;
+
+  let efeito = null;
+
+  if (modo === 'estatico') {
+    // aqui vira literalmente luminária fixa na cor da roda
+    efeito = 'estatico';
+  } else if (modo === 'sequencial') {
+    // placeholder: já manda como "efeito", ESP ignora por enquanto
+    efeito = 'sequencial';
+  }
+
+  if (!efeito) return;
+
+  const payload = {
+    from: 'web',
+    to: dest,
+    efeito,
+    cor: corAtual,
+    velocidade
+  };
+
+  publicarPayload(dest, payload);
+}
+
+    // Botão "Desligar luminária" – manda efeito "desligar"
+function enviarDesligar(){
+  if (!client || !client.connected) return;
+
+  const destino = document.getElementById('destino').value;
+  let dest = destino === 'waleria' ? 'ESP_WAL'
+           : destino === 'callebe' ? 'ESP_CALL'
+           : 'ALL';
+
+  // tira destaque dos modos, visualmente "nada selecionado"
+  document.querySelectorAll('.botoes-modo button')
+          .forEach(b => b.classList.remove('ativo'));
+
+  const payload = {
+    from: 'web',
+    to: dest,
+    efeito: 'desligar'
+  };
+
+  publicarPayload(dest, payload);
+}
+
+      
     // Publica no tópico correto
     function publicarPayload(dest,payload){
       if(dest==='ALL'){
