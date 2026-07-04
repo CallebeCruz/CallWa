@@ -485,11 +485,10 @@ if (isIOS) {
         statusCircle.style.background='green';
         lastPing=Date.now();
 
-        // Status novo: cada dispositivo publica em callwa/<deviceId>/status
-        client.subscribe('callwa/+/status');
-
-        // Compatibilidade com firmware antigo, caso ainda exista ping legado
+        // Firmware atual: mantém os tópicos antigos.
+        // Os IDs no payload podem ser callwa_MACADDRESS.
         client.subscribe('luminaria/ping');
+        console.log('[MQTT] conectado. Assinando: luminaria/ping');
       });
 
       client.on('message',(topic,msg)=>{
@@ -497,27 +496,18 @@ if (isIOS) {
           const p = JSON.parse(msg.toString());
           const now = Date.now();
 
-          // Novo padrão: callwa/callwa_MACADDRESS/status
-          if(topic.startsWith('callwa/') && topic.endsWith('/status')){
-            const parts = topic.split('/');
-            const deviceId = parts[1];
-
-            if(deviceId === DEVICE_CALLEBE || deviceId === DEVICE_WALERIA){
-              lastSeen[deviceId] = now;
-              pingText.textContent = String(now - lastPing);
-              lastPing = now;
-            }
-            return;
-          }
-
-          // Legado: luminaria/ping com { id: "callwa_MACADDRESS", status: "ok" }
+          // Ping/status legado: luminaria/ping
+          // Aceita tanto id novo: callwa_MACADDRESS
+          // quanto id antigo: ESP_CALL / ESP_WAL, para não quebrar testes.
           if(topic === 'luminaria/ping'){
             if(p.id && p.status === 'ok' && p.id !== 'CallWeb' && p.id !== 'WEB_CALLWA'){
               pingText.textContent = String(now - lastPing);
               lastPing = now;
 
-              if(p.id === DEVICE_CALLEBE || p.id === DEVICE_WALERIA){
-                lastSeen[p.id] = now;
+              const normalizedId = normalizarDeviceId(p.id);
+
+              if(normalizedId === DEVICE_CALLEBE || normalizedId === DEVICE_WALERIA){
+                lastSeen[normalizedId] = now;
               }
             }
           }
@@ -545,6 +535,17 @@ if (isIOS) {
         ledCallebe.style.background = now - lastSeen[DEVICE_CALLEBE] < 10000 ? 'lime' : '#ccc';
         ledWaleria.style.background = now - lastSeen[DEVICE_WALERIA] < 10000 ? 'lime' : '#ccc';
       },1000);
+    }
+
+    // Normaliza IDs recebidos no ping para manter compatibilidade.
+    function normalizarDeviceId(id){
+      if(id === DEVICE_CALLEBE || id === DEVICE_WALERIA) return id;
+
+      // Compatibilidade com firmware antigo, caso algum ESP ainda envie esses IDs.
+      if(id === 'ESP_CALL') return DEVICE_CALLEBE;
+      if(id === 'ESP_WAL') return DEVICE_WALERIA;
+
+      return id;
     }
 
     // Feedback tátil e sonoro
@@ -629,33 +630,56 @@ if (isIOS) {
       publicarPayload(dest, payload);
     }
 
-    // Publica no tópico correto usando callwa_MACADDRESS
+    // Publica usando os tópicos antigos do firmware atual.
+    // O endereçamento novo callwa_MACADDRESS fica dentro do payload, no campo "to".
     function publicarPayload(dest, payload){
       if(!client || !client.connected) return;
 
-      // Se selecionar Ambos, publica individualmente para cada dispositivo.
+      // Ambos: publica nos dois tópicos antigos, mas com "to" individual em cada payload.
       if(dest === 'ALL'){
-        publicarPayload(DEVICE_CALLEBE, {
+        const payloadCallebe = {
           ...payload,
-          to:DEVICE_CALLEBE
-        });
+          to: DEVICE_CALLEBE
+        };
 
-        publicarPayload(DEVICE_WALERIA, {
+        const payloadWaleria = {
           ...payload,
-          to:DEVICE_WALERIA
-        });
+          to: DEVICE_WALERIA
+        };
 
+        client.publish('luminaria/para_voce', JSON.stringify(payloadCallebe));
+        client.publish('luminaria/para_waleria', JSON.stringify(payloadWaleria));
+
+        console.log('[MQTT publish]', 'luminaria/para_voce', payloadCallebe);
+        console.log('[MQTT publish]', 'luminaria/para_waleria', payloadWaleria);
         return;
       }
 
-      // Padrão novo recomendado para firmware com deviceId = callwa_MACADDRESS:
-      // callwa/callwa_AABBCCDDEEFF/cmd
-      client.publish(`callwa/${dest}/cmd`, JSON.stringify(payload));
+      // Callebe: tópico antigo para o dispositivo "voce".
+      if(dest === DEVICE_CALLEBE){
+        const finalPayload = {
+          ...payload,
+          to: DEVICE_CALLEBE
+        };
 
-      // Caso seu firmware ainda esteja inscrito nos tópicos antigos, descomente abaixo
-      // e comente a linha acima.
-      // if(dest === DEVICE_CALLEBE) client.publish('luminaria/para_voce', JSON.stringify(payload));
-      // if(dest === DEVICE_WALERIA) client.publish('luminaria/para_waleria', JSON.stringify(payload));
+        client.publish('luminaria/para_voce', JSON.stringify(finalPayload));
+        console.log('[MQTT publish]', 'luminaria/para_voce', finalPayload);
+        return;
+      }
+
+      // Waléria: tópico antigo para o dispositivo dela.
+      if(dest === DEVICE_WALERIA){
+        const finalPayload = {
+          ...payload,
+          to: DEVICE_WALERIA
+        };
+
+        client.publish('luminaria/para_waleria', JSON.stringify(finalPayload));
+        console.log('[MQTT publish]', 'luminaria/para_waleria', finalPayload);
+        return;
+      }
+
+      console.warn('Destino inválido:', dest, payload);
     }
 
     // Color wheel
