@@ -350,7 +350,19 @@
     const splashText        = document.getElementById('splashText');
 
     // Estados
-    let client, corAtual = '#FFD6E0', lastPing = Date.now(), lastSeen = { ESP_CALL:0, ESP_WAL:0 };
+    // IDs reais dos dispositivos.
+    // IMPORTANTE: precisam estar idênticos ao firmware: callwa_ + MAC sem dois-pontos.
+    // Exemplo: MAC A0:B7:65:12:34:56 -> callwa_A0B765123456
+    const DEVICE_CALLEBE = 'callwa_COLOQUE_MAC_CALLEBE';
+    const DEVICE_WALERIA = 'callwa_COLOQUE_MAC_WALERIA';
+
+    let client;
+    let corAtual = '#FFD6E0';
+    let lastPing = Date.now();
+    let lastSeen = {
+      [DEVICE_CALLEBE]: 0,
+      [DEVICE_WALERIA]: 0
+    };
     let vibrationEnabled = true, soundEnabled = true;
 
     // Toggles vibração e som
@@ -461,37 +473,77 @@ if (isIOS) {
     // Conectar MQTT
     function conectarMQTT(){
       client = mqtt.connect('wss://70d4da565d9c476782999dc9303945b0.s1.eu.hivemq.cloud:8884/mqtt', {
-        username:'WEB_CALLWA', password:'Serzinhos2025', clientId:'CallWeb'
+        username:'WEB_CALLWA',
+        password:'Serzinhos2025',
+        clientId:'CallWeb_' + Math.random().toString(16).slice(2, 8),
+        clean: true,
+        reconnectPeriod: 2000,
+        connectTimeout: 8000
       });
+
       client.on('connect',()=>{
-        statusCircle.style.background='green'; lastPing=Date.now();
+        statusCircle.style.background='green';
+        lastPing=Date.now();
+
+        // Status novo: cada dispositivo publica em callwa/<deviceId>/status
+        client.subscribe('callwa/+/status');
+
+        // Compatibilidade com firmware antigo, caso ainda exista ping legado
         client.subscribe('luminaria/ping');
       });
+
       client.on('message',(topic,msg)=>{
-        if(topic==='luminaria/ping'){
-          try{
-            const p=JSON.parse(msg.toString());
-            if(p.id&&p.status==='ok'&&p.id!=='CallWeb'){
-              const pv=Date.now()-lastPing;
-              pingText.textContent=`${pv}`;
-              lastPing=Date.now();
-              if(p.id==='ESP_CALL') lastSeen.ESP_CALL=Date.now();
-              else if(p.id==='ESP_WAL') lastSeen.ESP_WAL=Date.now();
+        try{
+          const p = JSON.parse(msg.toString());
+          const now = Date.now();
+
+          // Novo padrão: callwa/callwa_MACADDRESS/status
+          if(topic.startsWith('callwa/') && topic.endsWith('/status')){
+            const parts = topic.split('/');
+            const deviceId = parts[1];
+
+            if(deviceId === DEVICE_CALLEBE || deviceId === DEVICE_WALERIA){
+              lastSeen[deviceId] = now;
+              pingText.textContent = String(now - lastPing);
+              lastPing = now;
             }
-          }catch{}
+            return;
+          }
+
+          // Legado: luminaria/ping com { id: "callwa_MACADDRESS", status: "ok" }
+          if(topic === 'luminaria/ping'){
+            if(p.id && p.status === 'ok' && p.id !== 'CallWeb' && p.id !== 'WEB_CALLWA'){
+              pingText.textContent = String(now - lastPing);
+              lastPing = now;
+
+              if(p.id === DEVICE_CALLEBE || p.id === DEVICE_WALERIA){
+                lastSeen[p.id] = now;
+              }
+            }
+          }
+        }catch(e){
+          console.warn('Mensagem MQTT inválida:', msg.toString());
         }
       });
+
       client.on('error',()=>statusCircle.style.background='red');
       client.on('close',()=>statusCircle.style.background='red');
+      client.on('offline',()=>statusCircle.style.background='red');
+
       setInterval(()=>{
-        if(client&&client.connected){
-          client.publish('luminaria/ping',JSON.stringify({
-            id:'CallWeb',from:'web',status:'ok',timestamp:Date.now()
+        if(client && client.connected){
+          // Mantém compatibilidade com o ping antigo.
+          client.publish('luminaria/ping', JSON.stringify({
+            id:'WEB_CALLWA',
+            from:'web',
+            status:'ok',
+            timestamp:Date.now()
           }));
         }
-        const now=Date.now();
-        ledCallebe.style.background= now-lastSeen.ESP_CALL<3000?'lime':'#ccc';
-        ledWaleria.style.background= now-lastSeen.ESP_WAL<3000?'lime':'#ccc';
+
+        const now = Date.now();
+        ledCallebe.style.background = now - lastSeen[DEVICE_CALLEBE] < 10000 ? 'lime' : '#ccc';
+        ledWaleria.style.background = now - lastSeen[DEVICE_WALERIA] < 10000 ? 'lime' : '#ccc';
       },1000);
     }
 
@@ -507,89 +559,103 @@ if (isIOS) {
       enviarComando(efeito);
     }
 
+    // Resolve destino selecionado no app
+    function getDestinoSelecionado(){
+      const destino = document.getElementById('destino').value;
+
+      if(destino === 'waleria') return DEVICE_WALERIA;
+      if(destino === 'callebe') return DEVICE_CALLEBE;
+
+      return 'ALL';
+    }
+
     // Envio comando
     function enviarComando(efeito){
-      if(!client||!client.connected) return;
-      const destino = document.getElementById('destino').value;
-      const velocidade = document.getElementById('velocidade').value;
-      let dest = destino==='waleria' ? 'ESP_WAL'
-               : destino==='callebe'? 'ESP_CALL' : 'ALL';
-      const payload={ from:'web', to:dest, efeito, cor:corAtual, velocidade };
-      publicarPayload(dest,payload);
+      if(!client || !client.connected) return;
+
+      const dest = getDestinoSelecionado();
+      const velocidade = Number(document.getElementById('velocidade').value);
+
+      const payload = {
+        from:'WEB_CALLWA',
+        to:dest,
+        efeito:efeito,
+        cor:corAtual,
+        velocidade:velocidade
+      };
+
+      publicarPayload(dest, payload);
     }
 
     // Envio modo (Estático / Sequencial) usando "efeito" + corAtual
-function enviarModo(modo, btn){
-  if (!client || !client.connected) return;
+    function enviarModo(modo, btn){
+      if(!client || !client.connected) return;
 
-  const destino = document.getElementById('destino').value;
-  let dest = destino === 'waleria' ? 'ESP_WAL'
-           : destino === 'callebe' ? 'ESP_CALL'
-           : 'ALL';
+      const dest = getDestinoSelecionado();
+      const velocidade = Number(document.getElementById('velocidade').value);
 
-  // Visual: marca botão ativo
-  document.querySelectorAll('.botoes-modo button')
-          .forEach(b => b.classList.remove('ativo'));
-  if (btn) btn.classList.add('ativo');
+      document.querySelectorAll('.botoes-modo button')
+              .forEach(b => b.classList.remove('ativo'));
+      if(btn) btn.classList.add('ativo');
 
-  const velocidade = document.getElementById('velocidade').value;
+      const payload = {
+        from:'WEB_CALLWA',
+        to:dest,
+        efeito:modo,
+        cor:corAtual,
+        velocidade:velocidade
+      };
 
-  let efeito = null;
-
-  if (modo === 'estatico') {
-    // aqui vira literalmente luminária fixa na cor da roda
-    efeito = 'estatico';
-  } else if (modo === 'sequencial') {
-    // placeholder: já manda como "efeito", ESP ignora por enquanto
-    efeito = 'sequencial';
-  }
-
-  if (!efeito) return;
-
-  const payload = {
-    from: 'web',
-    to: dest,
-    efeito,
-    cor: corAtual,
-    velocidade
-  };
-
-  publicarPayload(dest, payload);
-}
+      publicarPayload(dest, payload);
+    }
 
     // Botão "Desligar luminária" – manda efeito "desligar"
-function enviarDesligar(){
-  if (!client || !client.connected) return;
+    function enviarDesligar(){
+      if(!client || !client.connected) return;
 
-  const destino = document.getElementById('destino').value;
-  let dest = destino === 'waleria' ? 'ESP_WAL'
-           : destino === 'callebe' ? 'ESP_CALL'
-           : 'ALL';
+      const dest = getDestinoSelecionado();
 
-  // tira destaque dos modos, visualmente "nada selecionado"
-  document.querySelectorAll('.botoes-modo button')
-          .forEach(b => b.classList.remove('ativo'));
+      document.querySelectorAll('.botoes-modo button')
+              .forEach(b => b.classList.remove('ativo'));
 
-  const payload = {
-    from: 'web',
-    to: dest,
-    efeito: 'desligar'
-  };
+      const payload = {
+        from:'WEB_CALLWA',
+        to:dest,
+        efeito:'desligar',
+        cor:'#000000',
+        velocidade:0
+      };
 
-  publicarPayload(dest, payload);
-}
+      publicarPayload(dest, payload);
+    }
 
-      
-    // Publica no tópico correto
-    function publicarPayload(dest,payload){
-      if(dest==='ALL'){
-        client.publish('luminaria/para_voce',JSON.stringify(payload));
-        client.publish('luminaria/para_waleria',JSON.stringify(payload));
-      } else if(dest==='ESP_CALL'){
-        client.publish('luminaria/para_voce',JSON.stringify(payload));
-      } else {
-        client.publish('luminaria/para_waleria',JSON.stringify(payload));
+    // Publica no tópico correto usando callwa_MACADDRESS
+    function publicarPayload(dest, payload){
+      if(!client || !client.connected) return;
+
+      // Se selecionar Ambos, publica individualmente para cada dispositivo.
+      if(dest === 'ALL'){
+        publicarPayload(DEVICE_CALLEBE, {
+          ...payload,
+          to:DEVICE_CALLEBE
+        });
+
+        publicarPayload(DEVICE_WALERIA, {
+          ...payload,
+          to:DEVICE_WALERIA
+        });
+
+        return;
       }
+
+      // Padrão novo recomendado para firmware com deviceId = callwa_MACADDRESS:
+      // callwa/callwa_AABBCCDDEEFF/cmd
+      client.publish(`callwa/${dest}/cmd`, JSON.stringify(payload));
+
+      // Caso seu firmware ainda esteja inscrito nos tópicos antigos, descomente abaixo
+      // e comente a linha acima.
+      // if(dest === DEVICE_CALLEBE) client.publish('luminaria/para_voce', JSON.stringify(payload));
+      // if(dest === DEVICE_WALERIA) client.publish('luminaria/para_waleria', JSON.stringify(payload));
     }
 
     // Color wheel
